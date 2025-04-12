@@ -1,6 +1,8 @@
 package entities;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -57,7 +59,7 @@ public class Usuario {
 	    Statement st = null;
 	    
 	    try {
-	        conn = DB.getConnnection();
+	    	conn = DB.getConnnection();
 	        st = conn.createStatement();
 	    
 	        
@@ -76,8 +78,47 @@ public class Usuario {
 	    } finally {
 	        DB.CloseStatement(st);
 	        DB.closeConnection();
+	        
+	        
 	    }
+	    
+	    
+	    
 	}
 
+	
+	public static boolean autenticarUsuario(String email, String senhaDigitada) {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+
+	    try {
+	        conn = DB.getConnnection();
+
+	        ps = conn.prepareStatement("SELECT senha FROM usuarios WHERE email = ?");
+	        ps.setString(1, email);
+
+	        rs = ps.executeQuery();
+
+	        if (rs.next()) {
+	            String senhaHashBanco = rs.getString("senha");
+	            String senhaHashDigitada = HashUtil.gerarHashSHA256(senhaDigitada);
+
+	            return senhaHashBanco.equals(senhaHashDigitada);
+	        } else {
+	            System.out.println("Usuário não encontrado.");
+	            return false;
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    } finally {
+	        DB.CloseResultSet(rs);
+	        DB.CloseStatement(ps);
+	        DB.closeConnection();
+	    }
+	}
+	
 	
 }
